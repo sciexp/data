@@ -1,12 +1,12 @@
 ---
-title: "omicsio"
+title: "sciexp data platform"
 description: "Scientific data platform for omics I/O, lakehouse orchestration, and data mesh patterns"
 format:
   html:
     toc: false
 ---
 
-# omicsio
+# sciexp data platform
 
 Scientific data platform for omics I/O, lakehouse orchestration, and data mesh patterns
 
@@ -23,6 +23,6 @@ Scientific data platform for omics I/O, lakehouse orchestration, and data mesh p
 
 ## Links
 
-- [GitHub Repository](https://github.com/sciexp/omicsio)
+- [GitHub Repository](https://github.com/sciexp/data)
 - [Installation Guide](guides/installation.qmd)
 - [API Reference](reference/index.qmd)
