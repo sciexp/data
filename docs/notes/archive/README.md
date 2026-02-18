@@ -11,7 +11,7 @@ You can use [omnix](https://omnix.page/om/init.html)[^omnix] to initialize this 
 
 ```sh
 nix --accept-flake-config run github:juspay/omnix -- \
-init github:sciexp/omicsio -o new-python-project
+init github:sciexp/python-nix-template -o new-python-project
 ```
 
 [^omnix]: If you have omnix installed you just need `om init ...` and not `nix run ... -- init`
@@ -40,7 +40,7 @@ PARAMS=$(cat <<EOF
 }
 EOF
 ) && \
-nix --accept-flake-config run github:juspay/omnix/v1.3.2 -- init github:sciexp/omicsio/main -o "$PROJECT_DIRECTORY" --non-interactive --params "$PARAMS" && \
+nix --accept-flake-config run github:juspay/omnix/v1.3.2 -- init github:sciexp/python-nix-template/main -o "$PROJECT_DIRECTORY" --non-interactive --params "$PARAMS" && \
 (command -v direnv >/dev/null 2>&1 && direnv revoke "./$PROJECT_DIRECTORY/" || true) && \
 cd "$PROJECT_DIRECTORY" && \
 git init && \
@@ -79,7 +79,7 @@ PARAMS=$(cat <<EOF
 }
 EOF
 ) && \
-nix --accept-flake-config run github:juspay/omnix/v1.3.2 -- init github:sciexp/omicsio/main -o "$PROJECT_DIRECTORY" --non-interactive --params "$PARAMS" && \
+nix --accept-flake-config run github:juspay/omnix/v1.3.2 -- init github:sciexp/python-nix-template/main -o "$PROJECT_DIRECTORY" --non-interactive --params "$PARAMS" && \
 (command -v direnv >/dev/null 2>&1 && direnv revoke "./$PROJECT_DIRECTORY/" || true) && \
 cd "$PROJECT_DIRECTORY" && \
 git init && \
@@ -95,10 +95,10 @@ nix develop --accept-flake-config -c just test-all
 except you may want to update the git ref/rev of the template if you need to pin to a
 particular version:
 
-- `github:sciexp/omicsio/main`
-- `github:sciexp/omicsio/v0.1.0`
-- `github:sciexp/omicsio/3289dla`
-- `github:sciexp/omicsio/devbranch`.
+- `github:sciexp/python-nix-template/main`
+- `github:sciexp/python-nix-template/v0.1.0`
+- `github:sciexp/python-nix-template/3289dla`
+- `github:sciexp/python-nix-template/devbranch`.
 
 ### Quick start
 
@@ -251,8 +251,8 @@ Available recipes:
     gh-docs-rerun run_id="" failed_only="true"         # Re-run a failed docs workflow
     gh-docs-watch run_id=""                            # Watch a specific docs workflow run
     gh-workflow-status workflow="deploy-docs.yaml" branch=`git branch --show-current` limit="5" # View recent workflow runs status
-    ghsecrets repo="sciexp/omicsio"        # Update github secrets for repo from environment variables
-    ghvars repo="sciexp/omicsio"           # Update github vars for repo from environment variables
+    ghsecrets repo="sciexp/data"        # Update github secrets for repo from environment variables
+    ghvars repo="sciexp/data"           # Update github vars for repo from environment variables
     list-packages-json                                 # Discover packages as JSON array for CI matrix
     list-workflows                                     # List available workflows and associated jobs using act
     pre-commit                                         # Run pre-commit hooks (see pre-commit.nix and note the yaml is git-ignored)
