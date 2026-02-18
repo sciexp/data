@@ -1,5 +1,5 @@
 {
-  description = "omicsio: federated monorepo with uv2nix and pyo3/Rust extension modules";
+  description = "sciexp data platform: omics I/O, lakehouse orchestration, and data mesh patterns";
 
   outputs =
     inputs@{ flake-parts, ... }:
