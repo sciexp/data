@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # Self-contained bootstrap script for omicsio.
 # Intended for curl one-liner pre-clone onboarding:
-#   curl -sSf https://raw.githubusercontent.com/sciexp/omicsio/main/scripts/bootstrap.sh | bash
+#   curl -sSf https://raw.githubusercontent.com/sciexp/data/main/scripts/bootstrap.sh | bash
 #
 # This script must be kept in sync with the Makefile bootstrap targets
 # manually (discipline-based, not DRY import) since it must remain
 # self-contained for the curl use case.
 set -euo pipefail
 
-echo "omicsio bootstrap"
+echo "data bootstrap"
 echo "=============================="
 echo
 
