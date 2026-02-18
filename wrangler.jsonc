@@ -1,6 +1,6 @@
 {
     "$schema": "node_modules/wrangler/config-schema.json",
-    "name": "omicsio",
+    "name": "data",
     "compatibility_date": "2025-09-09",
     "assets": {
         "directory": "docs/_site"
@@ -15,7 +15,7 @@
     "preview_urls": true,
     "routes": [
         {
-            "pattern": "omicsio.scientistexperience.net",
+            "pattern": "data.scientistexperience.net",
             "custom_domain": true
         }
     ]
