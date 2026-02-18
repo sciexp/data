@@ -1,0 +1,48 @@
+---
+title: "Installation"
+description: "How to install omicsio"
+---
+
+# Installation
+
+This guide covers different ways to install omicsio.
+
+## Using UV (Recommended)
+
+The fastest way to get started is with UV:
+
+```bash
+uv pip install omicsio
+```
+
+## Using Pip
+
+You can also install with standard pip:
+
+```bash
+pip install omicsio
+```
+
+## Development Installation
+
+For development, clone the repository and set up the environment:
+
+```bash
+git clone https://github.com/sciexp/omicsio.git
+cd omicsio
+
+# With Nix (recommended)
+nix develop
+
+# Or with UV
+uv sync
+```
+
+## Verification
+
+Verify your installation by running:
+
+```python
+import omicsio
+print(omicsio.__version__)
+```

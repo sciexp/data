@@ -1,0 +1,25 @@
+{
+  "version": "0.1.0",
+  "configurations": [
+    {
+      "name": "omicsio: Debug CLI",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "omicsio",
+      "args": [
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "direnv allow"
+    },
+    {
+      "name": "Python: Debug Tests",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "purpose": ["debug-test"],
+      "console": "integratedTerminal",
+      "justMyCode": false
+    }
+  ]
+}

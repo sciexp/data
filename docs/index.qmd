@@ -1,0 +1,28 @@
+---
+title: "omicsio"
+description: "Scientific data platform for omics I/O, lakehouse orchestration, and data mesh patterns"
+format:
+  html:
+    toc: false
+---
+
+# omicsio
+
+Scientific data platform for omics I/O, lakehouse orchestration, and data mesh patterns
+
+## Quick Start
+
+[Get started with installation](guides/installation.qmd) or jump into the [tutorials](tutorials/getting-started.qmd).
+
+## Features
+
+- Modern Python development with UV and Nix
+- Type-safe development with beartype
+- Comprehensive testing with pytest
+- Professional documentation with Quarto
+
+## Links
+
+- [GitHub Repository](https://github.com/sciexp/omicsio)
+- [Installation Guide](guides/installation.qmd)
+- [API Reference](reference/index.qmd)
