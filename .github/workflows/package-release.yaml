@@ -1,0 +1,272 @@
+name: Package Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      package-path:
+        description: "Path to the package directory"
+        required: true
+        type: string
+      package-name:
+        description: "Name of the package"
+        required: true
+        type: string
+      version:
+        description: "Version to release"
+        required: true
+        type: string
+      checkout-ref:
+        description: "Git ref to checkout"
+        required: true
+        type: string
+      run-if-changed-only:
+        description: "Run only if this package has changed"
+        required: false
+        type: boolean
+        default: false
+      release-dry-run:
+        description: "Whether to run the release in dry-run mode"
+        required: false
+        type: boolean
+        default: false
+      debug-enabled:
+        description: "Enable tmate debug session"
+        required: false
+        type: boolean
+        default: false
+      build-images:
+        description: "Whether to build container images after release"
+        required: false
+        type: boolean
+        default: false
+      images-to-build:
+        description: "JSON array of images to build"
+        required: false
+        type: string
+        default: "[]"
+      force-run:
+        description: "Force execution even if already successful"
+        required: false
+        type: boolean
+        default: false
+
+  workflow_call:
+    inputs:
+      package-path:
+        description: "Path to the package directory"
+        required: true
+        type: string
+      package-name:
+        description: "Name of the package"
+        required: true
+        type: string
+      version:
+        description: "Version to release"
+        required: true
+        type: string
+      checkout-ref:
+        description: "Git ref to checkout"
+        required: true
+        type: string
+      run-if-changed-only:
+        description: "Run only if this package has changed"
+        required: false
+        type: string
+        default: "false"
+      release-dry-run:
+        description: "Whether to run the release in dry-run mode"
+        required: false
+        type: string
+        default: "false"
+      debug-enabled:
+        description: "Enable tmate debug session"
+        required: false
+        type: boolean
+        default: false
+      build-images:
+        description: "Whether to build container images after release"
+        required: false
+        type: string
+        default: "false"
+      images-to-build:
+        description: "JSON array of images to build"
+        required: false
+        type: string
+        default: "[]"
+      force-run:
+        description: "Force execution even if already successful"
+        required: false
+        type: string
+        default: "false"
+
+    outputs:
+      artifact-name:
+        description: "Name of the uploaded artifact"
+        value: ${{ jobs.release.outputs.artifact-name }}
+      version:
+        description: "Released version"
+        value: ${{ jobs.release.outputs.version }}
+      released:
+        description: "Whether a new release was published"
+        value: ${{ jobs.release.outputs.released }}
+      tag:
+        description: "Git tag created for the release"
+        value: ${{ jobs.release.outputs.tag }}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    outputs:
+      artifact-name: ${{ steps.set-outputs.outputs.artifact-name }}
+      version: ${{ steps.release-info.outputs.version || inputs.version }}
+      released: ${{ steps.release-info.outputs.released || 'false' }}
+      tag: ${{ steps.release-info.outputs.tag }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.checkout-ref }}
+          persist-credentials: false
+
+      # Production releases intentionally DO NOT save cache results.
+      # This ensures fresh builds for all production deployments per ADR-0016.
+      - name: Check execution cache
+        id: cache
+        uses: ./.github/actions/cached-ci-job
+        with:
+          check-name: ${{ inputs.package-name }}-release
+          hash-sources: 'packages/${{ inputs.package-name }}/**/* bun.lock justfile .github/actions/setup-nix/action.yml .github/workflows/package-release.yaml'
+          force-run: ${{ inputs.force-run }}
+
+      - name: Setup Nix
+        if: steps.cache.outputs.should-run == 'true'
+        uses: ./.github/actions/setup-nix
+        with:
+          installer: quick
+          system: x86_64-linux
+
+      - name: Install dependencies
+        if: steps.cache.outputs.should-run == 'true'
+        run: nix develop --accept-flake-config -c bun install
+
+      - name: Snapshot tags
+        id: tags-before
+        if: steps.cache.outputs.should-run == 'true'
+        run: |
+          echo "latest=$(git tag -l '${{ inputs.package-name }}-v*' | sort -V | tail -1)" >> "$GITHUB_OUTPUT"
+
+      - name: Run semantic-release
+        id: semantic-release
+        if: steps.cache.outputs.should-run == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          nix develop --accept-flake-config -c just release-package "${{ inputs.package-name }}" "${{ inputs.release-dry-run }}"
+
+      - name: Extract release info
+        if: always()
+        id: release-info
+        run: |
+          if [ "${{ inputs.release-dry-run }}" = "false" ]; then
+            LATEST_TAG=$(git tag -l '${{ inputs.package-name }}-v*' | sort -V | tail -1)
+            PREV_TAG="${{ steps.tags-before.outputs.latest }}"
+            if [ -n "$LATEST_TAG" ] && [ "$LATEST_TAG" != "$PREV_TAG" ]; then
+              VERSION=$(echo "$LATEST_TAG" | grep -oP '\d+\.\d+\.\d+' || echo "unknown")
+              {
+                echo "version=$VERSION"
+                echo "released=true"
+                echo "tag=$LATEST_TAG"
+              } >> "$GITHUB_OUTPUT"
+            else
+              {
+                echo "released=false"
+                echo "tag="
+              } >> "$GITHUB_OUTPUT"
+            fi
+          else
+            {
+              echo "released=false"
+              echo "tag="
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set outputs
+        id: set-outputs
+        if: steps.cache.outputs.should-run == 'true'
+        run: |
+          ARTIFACT_NAME="${{ inputs.package-name }}-${{ github.run_id }}"
+          echo "artifact-name=$ARTIFACT_NAME" >> "$GITHUB_OUTPUT"
+
+          if [ "${{ steps.release-info.outputs.released }}" == "true" ]; then
+            echo "Package ${{ inputs.package-name }} released version ${{ steps.release-info.outputs.version }}"
+            echo "Tag: ${{ steps.release-info.outputs.tag }}"
+          else
+            echo "No release needed for ${{ inputs.package-name }}"
+          fi
+
+      - name: Detect maturin package
+        id: detect-maturin
+        if: steps.cache.outputs.should-run == 'true'
+        run: |
+          if [ -f "${{ inputs.package-path }}/Cargo.toml" ]; then
+            echo "is-maturin=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is-maturin=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build package
+        if: steps.cache.outputs.should-run == 'true' && steps.detect-maturin.outputs.is-maturin != 'true' && (steps.release-info.outputs.released == 'true' || inputs.release-dry-run == 'true')
+        working-directory: ${{ inputs.package-path }}
+        run: |
+          nix develop --accept-flake-config -c uv build
+
+      - name: Setup tmate debug session
+        uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101 # v3
+        if: ${{ inputs.debug-enabled }}
+
+      - name: Upload artifacts
+        if: steps.cache.outputs.should-run == 'true' && steps.detect-maturin.outputs.is-maturin != 'true' && (steps.release-info.outputs.released == 'true' || inputs.release-dry-run == 'true')
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: ${{ steps.set-outputs.outputs.artifact-name }}
+          path: ${{ inputs.package-path }}/dist
+
+      - name: Publish to PyPI
+        if: steps.cache.outputs.should-run == 'true' && steps.detect-maturin.outputs.is-maturin != 'true' && steps.release-info.outputs.released == 'true' && inputs.release-dry-run != 'true'
+        working-directory: ${{ inputs.package-path }}
+        run: nix develop --accept-flake-config -c uv publish
+        env:
+          UV_PUBLISH_TOKEN: ${{ secrets.UV_PUBLISH_TOKEN }}
+
+      - name: Create job result marker
+        if: success() && steps.cache.outputs.should-run == 'true' && inputs.release-dry-run == 'true' && steps.cache.outputs.cache-source == 'none'
+        run: |
+          mkdir -p "${{ steps.cache.outputs.cache-path }}"
+          echo '{"success":true}' > "${{ steps.cache.outputs.cache-path }}/marker"
+
+      - name: Save execution cache
+        if: success() && steps.cache.outputs.should-run == 'true' && inputs.release-dry-run == 'true' && steps.cache.outputs.cache-source == 'none'
+        uses: actions/cache/save@b7e8d49f17405cc70c1c120101943203c98d3a4b # ratchet:actions/cache/save@v4
+        with:
+          path: ${{ steps.cache.outputs.cache-path }}
+          key: ${{ steps.cache.outputs.cache-key }}
+
+  build-images:
+    needs: [release]
+    if: ${{ inputs.build-images == 'true' && needs.release.outputs.released == 'true' && inputs.release-dry-run != 'true' }}
+    uses: ./.github/workflows/build-nix-images.yaml
+    with:
+      debug_enabled: ${{ inputs.debug-enabled }}
+      version: ${{ needs.release.outputs.version }}
+      push: true
+      tags: ""
+    secrets: inherit
+

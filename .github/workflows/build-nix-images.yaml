@@ -1,0 +1,171 @@
+name: Build Nix Images
+
+on:
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        description: "Run with tmate.io debugging enabled"
+        required: false
+        type: boolean
+        default: false
+      version:
+        description: "Version to tag images with"
+        required: false
+        type: string
+        default: ""
+      push:
+        description: "Push manifests to registry"
+        required: false
+        type: boolean
+        default: false
+      tags:
+        description: "Additional tags, comma-separated"
+        required: false
+        type: string
+        default: ""
+
+  workflow_call:
+    inputs:
+      debug_enabled:
+        description: "Run with tmate.io debugging enabled"
+        required: false
+        type: boolean
+        default: false
+      version:
+        description: "Version to tag images with"
+        required: false
+        type: string
+        default: ""
+      push:
+        description: "Push manifests to registry"
+        required: false
+        type: boolean
+        default: false
+      tags:
+        description: "Additional tags, comma-separated"
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      build-matrix: ${{ steps.matrix.outputs.build }}
+      manifest-matrix: ${{ steps.matrix.outputs.manifest }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Nix
+        uses: ./.github/actions/setup-nix
+        with:
+          system: x86_64-linux
+          enable-cachix: true
+          cachix-name: ${{ vars.CACHIX_CACHE_NAME }}
+          cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
+
+      - name: Discover container matrix
+        id: matrix
+        run: |
+          echo "Evaluating containerMatrix from flake..."
+          BUILD=$(nix eval .#containerMatrix.build --json --accept-flake-config)
+          MANIFEST=$(nix eval .#containerMatrix.manifest --json --accept-flake-config)
+          echo "Build matrix: $BUILD"
+          echo "Manifest matrix: $MANIFEST"
+          echo "build=$BUILD" >> "$GITHUB_OUTPUT"
+          echo "manifest=$MANIFEST" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: discover
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.discover.outputs.build-matrix) }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -yq zstd
+          sudo apt-get clean
+
+      - name: Setup QEMU
+        if: matrix.type == 'dev'
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
+        with:
+          platforms: arm64
+
+      - name: Setup Nix
+        uses: ./.github/actions/setup-nix
+        with:
+          system: x86_64-linux
+          extra-conf: |
+            system-features = nixos-test benchmark big-parallel kvm
+            ${{ matrix.type == 'dev' && 'extra-platforms = aarch64-linux' || '' }}
+          enable-cachix: true
+          cachix-name: ${{ vars.CACHIX_CACHE_NAME }}
+          cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
+
+      - name: Setup tmate debug session
+        uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101 # v3
+        if: ${{ inputs.debug_enabled == true }}
+
+      - name: Build ${{ matrix.package }}
+        run: |
+          echo "Building ${{ matrix.package }} (type: ${{ matrix.type }})"
+          nix build .#${{ matrix.package }} -L --accept-flake-config
+
+  manifest:
+    needs: [discover, build]
+    if: inputs.push == true
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.discover.outputs.manifest-matrix) }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Nix
+        uses: ./.github/actions/setup-nix
+        with:
+          system: x86_64-linux
+          enable-cachix: true
+          cachix-name: ${{ vars.CACHIX_CACHE_NAME }}
+          cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Push ${{ matrix.name }} manifest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          VERSION: ${{ inputs.version }}
+          TAGS: ${{ inputs.tags }}
+          NIX_IMAGE_SYSTEMS: ${{ matrix.type == 'dev' && 'x86_64-linux' || '' }}
+        run: |
+          echo "Pushing manifest for ${{ matrix.name }} (type: ${{ matrix.type }})"
+          echo "Version: ${VERSION}"
+          echo "Additional tags: ${TAGS:-none}"
+          nix run --impure .#${{ matrix.name }}Manifest -L --accept-flake-config
