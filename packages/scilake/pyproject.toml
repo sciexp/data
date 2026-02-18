@@ -7,7 +7,7 @@ description = "Domain-agnostic lakehouse orchestration for scientific data"
 name = "scilake"
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
-version = "0.0.1"
+version = "0.0.0"
 
 [build-system]
 build-backend = "hatchling.build"
@@ -80,7 +80,7 @@ types = "pyright src/"
 
 [tool.pixi.package]
 name    = "scilake"
-version = "0.0.1"
+version = "0.0.0"
 
 [tool.pixi.package.run-dependencies]
 
