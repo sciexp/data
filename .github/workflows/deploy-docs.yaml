@@ -67,7 +67,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: ${{ inputs.environment }}
-      url: ${{ inputs.environment == 'preview' && format('https://b-{0}-omicsio.sciexp.workers.dev', inputs.sanitized_branch || inputs.branch) || 'https://omicsio.scientistexperience.net' }}
+      url: ${{ inputs.environment == 'preview' && format('https://b-{0}-data.sciexp.workers.dev', inputs.sanitized_branch || inputs.branch) || 'https://data.scientistexperience.net' }}
     permissions:
       contents: read
       deployments: write
