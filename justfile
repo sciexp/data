@@ -38,7 +38,7 @@ gcloud-context:
 
 # Update github vars for repo from environment variables
 [group('CI/CD')]
-ghvars repo="sciexp/omicsio":
+ghvars repo="sciexp/data":
   @echo "vars before updates:"
   @echo
   PAGER=cat gh variable list --repo={{ repo }}
@@ -53,7 +53,7 @@ ghvars repo="sciexp/omicsio":
 
 # Update github secrets for repo from environment variables
 [group('CI/CD')]
-ghsecrets repo="sciexp/omicsio":
+ghsecrets repo="sciexp/data":
   @echo "secrets before updates:"
   @echo
   PAGER=cat gh secret list --repo={{ repo }}
