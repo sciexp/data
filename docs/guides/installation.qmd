@@ -28,7 +28,7 @@ pip install omicsio
 For development, clone the repository and set up the environment:
 
 ```bash
-git clone https://github.com/sciexp/omicsio.git
+git clone https://github.com/sciexp/data.git
 cd omicsio
 
 # With Nix (recommended)
