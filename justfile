@@ -881,7 +881,7 @@ docs-deploy-production: docs-build
             echo "  Tag: ${CURRENT_TAG}"
             echo "  Full SHA: ${CURRENT_SHA}"
             echo "  Deployed by: ${DEPLOY_MSG}"
-            echo "  Production URL: https://omicsio.scientistexperience.net"
+            echo "  Production URL: https://data.scientistexperience.net"
         else
             echo ""
             echo "Failed to promote version ${EXISTING_VERSION}"
@@ -904,7 +904,7 @@ docs-deploy-production: docs-build
             echo "Built and deployed to production"
             echo "  Full SHA: ${CURRENT_SHA}"
             echo "  Deployed by: ${DEPLOY_MSG}"
-            echo "  Production URL: https://omicsio.scientistexperience.net"
+            echo "  Production URL: https://data.scientistexperience.net"
         else
             echo ""
             echo "Failed to build and deploy"
@@ -944,7 +944,7 @@ docs-deploy-preview branch=`git branch --show-current`: docs-build
     echo "  Tag: ${COMMIT_TAG}"
     echo "  Full SHA: ${COMMIT_SHA}"
     echo "  Message: ${MESSAGE}"
-    echo "  Preview URL: https://b-${SAFE_BRANCH}-omicsio.sciexp.workers.dev"
+    echo "  Preview URL: https://b-${SAFE_BRANCH}-data.sciexp.workers.dev"
 
 # List recent Cloudflare Workers versions
 [group('docs')]
