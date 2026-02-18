@@ -611,7 +611,7 @@ sops-rotate role='dev' method='ssh':
 # Initialize new project from template
 [group('template')]
 template-init:
-    echo "Use: nix --accept-flake-config run github:juspay/omnix/v1.3.2 -- init github:sciexp/omicsio -o new-python-project"
+    echo "Use: nix --accept-flake-config run github:juspay/omnix/v1.3.2 -- init github:sciexp/python-nix-template -o new-python-project"
 
 # Verify template functionality by creating and checking a test project
 [group('template')]
