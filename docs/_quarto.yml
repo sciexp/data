@@ -39,9 +39,9 @@ interlinks:
       url: https://numpy.org/doc/stable/
 
 website:
-  title: "omicsio"
+  title: "sciexp data platform"
   description: "Scientific data platform for omics I/O, lakehouse orchestration, and data mesh patterns"
-  site-url: "https://sciexp.github.io/omicsio"
+  site-url: "https://sciexp.github.io/data"
   back-to-top-navigation: false
   page-navigation: true
 
@@ -50,7 +50,7 @@ website:
     left: ""
     right:
       - icon: github
-        href: https://github.com/sciexp/omicsio
+        href: https://github.com/sciexp/data
 
   search:
     type: overlay
@@ -59,7 +59,7 @@ website:
     background: primary
     tools:
       - icon: github
-        href: https://github.com/sciexp/omicsio
+        href: https://github.com/sciexp/data
     left:
       - sidebar:tutorials
       - sidebar:guides
