@@ -5,7 +5,7 @@
 }:
 let
   gitHubOrg = "sciexp";
-  repoName = "omicsio";
+  repoName = "data";
 
   # Discover maturin packages from packages/ directory. Each subdirectory
   # containing a Cargo.toml is a maturin/pyo3 package that gets a production
