@@ -1,0 +1,4 @@
+{
+  "build-images": false,
+  "images": ["scilake", "scilake-dev"]
+}
