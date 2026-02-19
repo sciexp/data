@@ -85,17 +85,17 @@
     in
     {
       devShells = rec {
-        omicsio312 = mkDevShell {
-          name = "omicsio-3.12";
+        data312 = mkDevShell {
+          name = "data-3.12";
           pythonVersion = "py312";
         };
 
-        omicsio313 = mkDevShell {
-          name = "omicsio-3.13";
+        data313 = mkDevShell {
+          name = "data-3.13";
           pythonVersion = "py313";
         };
 
-        default = omicsio313;
+        default = data313;
       };
     };
 }
